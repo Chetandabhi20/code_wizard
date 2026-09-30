@@ -1,0 +1,9 @@
+# Dependencies (downloadable via npm install, so never commit to git)
+node_modules/
+
+# Environment variables & secrets (passwords, DB keys)
+.env
+
+# OS-specific files
+.DS_Store
+Thumbs.db

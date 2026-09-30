@@ -1,0 +1,240 @@
+ <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>CivicFlow — AI-Powered Civic Platform</title>
+
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+      <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+
+      <!-- Top Navbar -->
+      <header class="navbar">
+        <div class="container nav-content">
+          <div class="brand">
+            <div class="logo-badge">⚡</div>
+            <div>
+              <h1 class="logo">CivicFlow</h1>
+              <p class="tagline">AI-Powered City Assistant</p>
+            </div>
+          </div>
+
+          <div class="auth-nav">
+            <button id="openAuthBtn" class="btn-secondary">Sign In / Register</button>
+            <div id="userInfo" class="user-pill hidden">
+              <span id="userNameDisplay" class="user-name">User</span>
+              <button id="logoutBtn" class="btn-logout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="container">
+
+        <!-- ================= 1. CITIZEN AI-PROMPT PORTAL ================= -->
+        <div id="citizenPortal" class="portal-section">
+          <div class="hero-banner">
+            <h2>What civic problem did you notice today?</h2>
+            <p>Type in your own words or click the mic to speak. Our AI handles classification, prioritization & dispatch automatically.</p>
+          </div>
+
+          <!-- Navigation Tabs -->
+          <div class="citizen-tabs">
+            <button id="tabNewReport" class="citizen-tab active">💬 Describe or Speak Issue</button>
+            <button id="tabMyReports" class="citizen-tab">📋 Track My Reports</button>
+          </div>
+
+          <!-- AI Prompt Card -->
+          <section id="reportFormSection" class="card prompt-card">
+            <form id="complaintForm">
+
+              <!-- Single Intelligent Natural Language Prompt Area -->
+              <div class="prompt-box-wrapper">
+                <label for="promptInput" class="prompt-label">
+                  <span>Tell AI about the issue (Paragraph or Speech)</span>
+                  <button type="button" id="voiceBtn" class="btn-voice">
+                    <span class="mic-icon">🎙️</span>
+                    <span id="voiceBtnText">Click to Speak</span>
+                  </button>
+                </label>
+
+                <textarea
+                  id="promptInput"
+                  rows="5"
+                  placeholder="e.g., A heavy vehicle hit the electric pole on 4th Cross Road. Sparking wires are dangling over the pavement
+  and it's dangerous for school kids..."
+                  required
+                ></textarea>
+                <p id="voiceStatus" class="voice-status-text"></p>
+              </div>
+
+              <!-- Location & Photo Bar -->
+              <div class="prompt-meta-grid">
+                <div class="form-group flex-1">
+                  <div class="label-with-action">
+                    <label for="location">📍 Location / Landmark <span class="required">*</span></label>
+                    <button type="button" id="geoBtn" class="btn-geo">📍 Auto GPS</button>
+                  </div>
+                  <input type="text" id="location" placeholder="e.g., In front of Metro Gate 2" required>
+                  <input type="hidden" id="latitude">
+                  <input type="hidden" id="longitude">
+                  <p id="geoStatus" class="geo-status-text"></p>
+                </div>
+
+                <div class="form-group flex-1">
+                  <label for="image">📷 Attach Photo <span class="optional">(Optional)</span></label>
+                  <input type="file" id="image" accept="image/*">
+                </div>
+              </div>
+
+              <button type="submit" id="submitBtn" class="btn-ai-submit">
+                <span>🚀 Submit & Analyze with AI</span>
+              </button>
+            </form>
+
+            <div id="statusMessage" class="status-box hidden"></div>
+          </section>
+
+          <!-- Citizen's Personal Submissions -->
+          <section id="myReportsSection" class="card hidden">
+            <div class="section-header">
+              <h3>Your Submitted Complaints</h3>
+              <span id="myReportCount" class="badge badge-neutral">0 reports</span>
+            </div>
+            <div id="myComplaintsList" class="complaints-list">
+              <p class="loading-text">Please sign in to track your personal reports.</p>
+            </div>
+          </section>
+        </div>
+
+        <!-- ================= 2. ADMIN & DEPARTMENT DASHBOARD ================= -->
+        <div id="adminPortal" class="portal-section hidden">
+          <div class="dashboard-header">
+            <div>
+              <h2 class="dash-title">City Operations Command Center</h2>
+              <p class="dash-subtitle">Real-time triage, AI prioritization, and department dispatching</p>
+            </div>
+            <span class="badge badge-admin">⚡ Authorized Personnel</span>
+          </div>
+
+          <!-- KPI Analytics Grid -->
+          <div class="stats-grid">
+            <div class="stat-card"><span class="stat-label">Total Reports</span><span id="statTotal" class="stat-val">0</span></div>
+            <div class="stat-card stat-pending"><span class="stat-label">Pending</span><span id="statPending" class="stat-val">0</span></div>
+            <div class="stat-card stat-progress"><span class="stat-label">In Progress</span><span id="statInProgress" class="stat-
+  val">0</span></div>
+            <div class="stat-card stat-resolved"><span class="stat-label">Resolved</span><span id="statResolved" class="stat-
+  val">0</span></div>
+            <div class="stat-card stat-high"><span class="stat-label">🚨 High Hazard</span><span id="statHigh" class="stat-val">0</span></div>
+          </div>
+
+          <!-- City Map -->
+          <div class="card map-card">
+            <div class="section-header">
+              <h3>🗺️ Real-Time City Geospatial Map</h3>
+              <span class="count-badge">Live GPS Pinned</span>
+            </div>
+            <div id="map" class="map-container"></div>
+          </div>
+
+          <!-- Filter Controls -->
+          <div class="card filter-card">
+            <div class="filter-toolbar">
+              <div class="filter-item">
+                <label for="filterDept">Department:</label>
+                <select id="filterDept" class="filter-select">
+                  <option value="ALL">All Departments</option>
+                  <option value="Roads">Roads</option>
+                  <option value="Electricity">Electricity</option>
+                  <option value="Sanitation">Sanitation</option>
+                  <option value="Water">Water</option>
+                </select>
+              </div>
+
+              <div class="filter-item">
+                <label for="filterStatus">Status:</label>
+                <select id="filterStatus" class="filter-select">
+                  <option value="ALL">All Statuses</option>
+                  <option value="PENDING">PENDING</option>
+                  <option value="ASSIGNED">ASSIGNED</option>
+                  <option value="IN_PROGRESS">IN PROGRESS</option>
+                  <option value="RESOLVED">RESOLVED</option>
+                </select>
+              </div>
+
+              <div class="filter-item">
+                <label for="filterPriority">Priority:</label>
+                <select id="filterPriority" class="filter-select">
+                  <option value="ALL">All Priorities</option>
+                  <option value="HIGH">🚨 HIGH</option>
+                  <option value="MEDIUM">⚡ MEDIUM</option>
+                  <option value="LOW">ℹ️ LOW</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Work Queue -->
+          <div class="section-header" style="margin-top: 24px;">
+            <h3>Complaint Management Work Queue</h3>
+            <span id="adminComplaintCount" class="badge badge-neutral">0 issues</span>
+          </div>
+          <div id="adminComplaintsList" class="complaints-list">
+            <p class="loading-text">Loading management feed...</p>
+          </div>
+        </div>
+
+      </main>
+
+      <!-- Auth Modal -->
+      <div id="authModal" class="modal-overlay hidden">
+        <div class="modal-box">
+          <button id="closeAuthBtn" class="modal-close">&times;</button>
+
+          <div class="modal-tabs">
+            <button id="tabLogin" class="tab-btn active">Sign In</button>
+            <button id="tabRegister" class="tab-btn">Create Citizen Account</button>
+          </div>
+
+          <form id="loginForm" class="auth-form">
+            <div class="form-group">
+              <label for="loginEmail">Email Address</label>
+              <input type="email" id="loginEmail" placeholder="e.g., citizen@example.com or admin@civicflow.org" required>
+            </div>
+            <div class="form-group">
+              <label for="loginPassword">Password</label>
+              <input type="password" id="loginPassword" placeholder="Enter password" required>
+            </div>
+            <button type="submit" class="btn-primary">Sign In to CivicFlow</button>
+          </form>
+
+          <form id="registerForm" class="auth-form hidden">
+            <div class="form-group">
+              <label for="regName">Full Name</label>
+              <input type="text" id="regName" placeholder="e.g., Jane Doe" required>
+            </div>
+            <div class="form-group">
+              <label for="regEmail">Email Address</label>
+              <input type="email" id="regEmail" placeholder="e.g., jane@example.com" required>
+            </div>
+            <div class="form-group">
+              <label for="regPassword">Password</label>
+              <input type="password" id="regPassword" minlength="6" placeholder="Min 6 characters" required>
+            </div>
+            <button type="submit" class="btn-primary">Register Citizen Account</button>
+          </form>
+
+          <div id="authStatus" class="status-box hidden"></div>
+        </div>
+      </div>
+
+      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+      <script src="app.js"></script>
+    </body>
+    </html>
