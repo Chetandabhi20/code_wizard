@@ -384,5 +384,5 @@
     });
 
     app.listen(PORT, () => {
-      console.log(`🚀 CivicFlow Backend & Frontend running at: http://localhost:${PORT}`);
+      console.log(`🚀 NagarSetu Backend & Frontend running at: http://localhost:${PORT}`);
     });

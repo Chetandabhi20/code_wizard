@@ -1,6 +1,6 @@
-# CivicFlow
+# NagarSetu
 
-    CivicFlow is an open-source civic issue reporting and management platform.
+    NagarSetu is an open-source civic issue reporting and management platform.
 
     ## Architecture
     - **Frontend**: HTML5, CSS3, JavaScript (Fetch API)

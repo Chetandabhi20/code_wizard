@@ -1,4 +1,4 @@
--- CivicFlow Database Schema (SQLite)
+-- NagarSetu Database Schema (SQLite)
 
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -1,7 +1,7 @@
 {
-      "name": "civicflow-backend",
+      "name": "nagarsetu-backend",
       "version": "1.0.0",
-      "description": "Backend REST API server for CivicFlow",
+      "description": "Backend REST API server for NagarSetu",
       "main": "server.js",
       "scripts": {
             "start": "node server.js"

@@ -55,21 +55,21 @@ async function readApiResponse(response) {
   return data;
 }
 
-function getAuthToken() { return localStorage.getItem('civicflow_token'); }
+function getAuthToken() { return localStorage.getItem('nagarsetu_token'); }
 function getUser() {
-  const user = localStorage.getItem('civicflow_user');
+  const user = localStorage.getItem('nagarsetu_user');
   return user ? JSON.parse(user) : null;
 }
 
 function setAuth(token, user) {
-  localStorage.setItem('civicflow_token', token);
-  localStorage.setItem('civicflow_user', JSON.stringify(user));
+  localStorage.setItem('nagarsetu_token', token);
+  localStorage.setItem('nagarsetu_user', JSON.stringify(user));
   syncViewWithRole();
 }
 
 function clearAuth() {
-  localStorage.removeItem('civicflow_token');
-  localStorage.removeItem('civicflow_user');
+  localStorage.removeItem('nagarsetu_token');
+  localStorage.removeItem('nagarsetu_user');
   syncViewWithRole();
 }
 
@@ -409,7 +409,7 @@ if (submitBtn) {
     } catch (err) {
       showToast(`Error: ${err.message}`, 'error');
     } finally {
-      submitBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">send_spark</span><span>Submit Incident Report</span>';
+      submitBtn.innerHTML = '<span>Submit</span>';
       submitBtn.disabled = false;
     }
   });
@@ -799,7 +799,7 @@ function exportCSV() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `civicflow_export_${new Date().toISOString().split('T')[0]}.csv`;
+  a.download = `nagarsetu_export_${new Date().toISOString().split('T')[0]}.csv`;
   a.click();
   URL.revokeObjectURL(url);
   showToast('CSV exported successfully!', 'success');
