@@ -39,7 +39,7 @@
 
     const upload = multer({
       storage: storage,
-      limits: { fileSize: 5 * 1024 * 1024 },
+      limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB limit
       fileFilter: (req, file, cb) => {
         const allowed = /jpeg|jpg|png|webp/;
         const isValid = allowed.test(path.extname(file.originalname).toLowerCase()) && allowed.test(file.mimetype);
@@ -350,6 +350,19 @@
         if (result.rows.length === 0) return res.status(404).json({ success: false, error: 'Not found' });
         res.status(200).json({ success: true, message: 'Deleted.' });
       } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+    });
+
+    // Global Error Handler for Multer & other errors
+    app.use((err, req, res, next) => {
+      if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(400).json({ success: false, error: 'File too large. Maximum size allowed is 20MB.' });
+        }
+        return res.status(400).json({ success: false, error: err.message });
+      } else if (err) {
+        return res.status(500).json({ success: false, error: err.message });
+      }
+      next();
     });
 
     app.listen(PORT, () => {
