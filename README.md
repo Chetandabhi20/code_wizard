@@ -435,18 +435,6 @@ Add the corresponding image files under `docs/screenshots/` when screenshots are
 - Add real data services for the Civic Heroes leaderboard and account trust-score changes.
 - Add account recovery, password changes, and administrator credential management.
 
-## Team
-
-**Team:** [Team Name]<br>
-**Hackathon:** [Hackathon Name]
-
-| Name | Role | GitHub / LinkedIn |
-|---|---|---|
-| [Your Name] | [Your Role] | [Profile URL] |
-| [Team Member Name] | [Team Member Role] | [Profile URL] |
-
-**Live demo:** [Add live demo link]
-
 ## Contributing
 
 Contributions are welcome. To propose a change:
