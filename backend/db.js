@@ -13,8 +13,8 @@ const dbPromise = open({
   driver: sqlite3.Database
 });
 
-// Initialize database schema
-dbPromise.then(async (db) => {
+// Initialize database schema and export an initPromise
+const initPromise = dbPromise.then(async (db) => {
   console.log('📦 Successfully connected to SQLite database (civicflow.db)!');
   
   const schemaPath = path.join(__dirname, '..', 'database', 'schema.sql');
@@ -24,14 +24,16 @@ dbPromise.then(async (db) => {
   await db.exec('PRAGMA foreign_keys = ON;');
   await db.exec(schema);
   console.log('📜 SQLite database schema ensured.');
+  return db;
 }).catch(err => {
   console.error('❌ Database connection error:', err);
+  throw err;
 });
 
 // Export a PostgreSQL-compatible query wrapper
 module.exports = {
   query: async (text, params = []) => {
-    const db = await dbPromise;
+    const db = await initPromise;
     // Replace Postgres placeholders ($1, $2) with SQLite placeholders (?)
     const sqliteText = text.replace(/\$\d+/g, '?');
     
