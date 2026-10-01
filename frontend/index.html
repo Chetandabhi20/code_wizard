@@ -1,240 +1,610 @@
- <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>CivicFlow — AI-Powered Civic Platform</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}select{appearance:auto;cursor:pointer;}</style>
+<script src="https://cdn.tailwindcss.com"></script>
+<script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"on-secondary-container":"#fefcff","surface-container-highest":"#dae2fd","primary-container":"#1e3a8a","surface-dim":"#d2d9f4","on-tertiary-container":"#4ac08f","secondary-fixed-dim":"#b4c5ff","on-tertiary-fixed":"#002114","tertiary-container":"#004a32","error":"#ba1a1a","on-background":"#131b2e","inverse-surface":"#283044","surface-container-lowest":"#ffffff","on-secondary-fixed-variant":"#003ea8","secondary-fixed":"#dbe1ff","primary":"#00236f","on-error-container":"#93000a","on-primary-container":"#90a8ff","outline":"#757682","on-primary-fixed-variant":"#264191","on-tertiary":"#ffffff","tertiary-fixed-dim":"#68dba9","on-error":"#ffffff","background":"#faf8ff","tertiary-fixed":"#85f8c4","surface-container-low":"#f2f3ff","secondary-container":"#316bf3","error-container":"#ffdad6","primary-fixed":"#dce1ff","outline-variant":"#c5c5d3","inverse-on-surface":"#eef0ff","surface":"#faf8ff","on-surface-variant":"#444651","on-secondary-fixed":"#00174b","surface-container-high":"#e2e7ff","on-tertiary-fixed-variant":"#005137","on-surface":"#131b2e","inverse-primary":"#b6c4ff","surface-bright":"#faf8ff","on-secondary":"#ffffff","on-primary":"#ffffff","on-primary-fixed":"#00164e","secondary":"#0051d5","surface-container":"#eaedff","tertiary":"#003120","surface-variant":"#dae2fd","surface-tint":"#4059aa","primary-fixed-dim":"#b6c4ff"},borderRadius:{DEFAULT:"0.25rem",lg:"0.5rem",xl:"0.75rem",full:"9999px"},spacing:{margin:"2rem","space-lg":"1.5rem",gutter:"1.5rem","space-md":"1rem","margin-mobile":"1rem","space-sm":"0.5rem","gutter-mobile":"1rem","space-xs":"0.25rem","space-xl":"2.5rem"},fontFamily:{"headline-sm":["Inter"],"body-lg":["Inter"],display:["Inter"],"label-sm":["Inter"],"body-md":["Inter"],"headline-lg-mobile":["Inter"],"body-sm":["Inter"],"label-md":["Inter"],"title-md":["Inter"],"headline-md":["Inter"],"headline-lg":["Inter"]},fontSize:{"headline-sm":["20px",{lineHeight:"28px",letterSpacing:"-0.015em",fontWeight:"600"}],"body-lg":["16px",{lineHeight:"24px",letterSpacing:"0em",fontWeight:"400"}],display:["40px",{lineHeight:"48px",letterSpacing:"-0.025em",fontWeight:"700"}],"label-sm":["11px",{lineHeight:"14px",letterSpacing:"0.04em",fontWeight:"600"}],"body-md":["14px",{lineHeight:"20px",letterSpacing:"0em",fontWeight:"400"}],"headline-lg-mobile":["26px",{lineHeight:"34px",letterSpacing:"-0.015em",fontWeight:"600"}],"body-sm":["12px",{lineHeight:"16px",letterSpacing:"0.01em",fontWeight:"400"}],"label-md":["13px",{lineHeight:"18px",letterSpacing:"-0.005em",fontWeight:"500"}],"title-md":["16px",{lineHeight:"24px",letterSpacing:"-0.01em",fontWeight:"600"}],"headline-md":["24px",{lineHeight:"32px",letterSpacing:"-0.02em",fontWeight:"600"}],"headline-lg":["32px",{lineHeight:"40px",letterSpacing:"-0.02em",fontWeight:"600"}]}}}}</script>
+</head>
+<body class="bg-background font-body-md text-on-surface antialiased min-h-screen flex flex-col">
+  <!-- Hidden form inputs -->
+  <input id="latitude" type="hidden"/>
+  <input id="longitude" type="hidden"/>
+  <input id="location" type="hidden"/>
+  <input class="hidden" id="image" type="file" accept="image/jpeg,image/png,image/webp"/>
 
-      <link rel="preconnect" href="https://fonts.googleapis.com">
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <div id="citizenPortal">
+    <header class="fixed top-0 w-full z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+      <div class="bg-surface-container-low px-margin py-1 flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm">
+        <div class="flex items-center gap-space-md">
+          <span class="flex items-center gap-space-xs font-label-sm text-label-sm uppercase tracking-wider text-tertiary-container"><span class="w-2 h-2 rounded-full bg-on-tertiary-container animate-pulse"></span>Live Municipal Status</span>
+          <span class="hidden sm:inline-block text-outline-variant">|</span>
+          <span class="font-label-md text-label-md text-on-surface">Metro District 4: Normal Ops</span>
+          <span class="hidden md:inline-block text-outline-variant">&bull;</span>
+          <span class="hidden md:inline-block">Avg Response Time: <strong class="text-on-surface font-label-md text-label-md">3.2 hrs</strong></span>
+          <span class="hidden lg:inline-block text-outline-variant">&bull;</span>
+          <span class="hidden lg:inline-block">Active Crew Units: <strong class="text-on-surface font-label-md text-label-md">42 In Field</strong></span>
+        </div>
+        <div class="flex items-center gap-space-md">
+          <div class="flex items-center gap-space-xs text-error font-label-sm text-label-sm uppercase">
+            <span class="material-symbols-outlined text-[14px]">warning</span>
+            <span class="hidden sm:inline">Life Threatening Emergency? Call</span>
+            <strong>911</strong>
+          </div>
+        </div>
+      </div>
+      <div class="h-20 max-w-[1440px] mx-auto px-margin flex items-center justify-between gap-space-md">
+        <div class="flex items-center gap-space-lg">
+          <div class="flex items-center gap-space-sm">
+            <div class="flex flex-col">
+              <div class="flex items-center gap-space-xs">
+                <span class="font-title-md text-title-md text-primary tracking-tight font-bold">CivicFlow</span>
+                <span class="px-2 py-0.5 rounded-full bg-surface-container-high text-primary font-label-sm text-label-sm">GovTech AI 2.4</span>
+              </div>
+              <span class="font-body-sm text-body-sm text-on-surface-variant">Municipal Intelligence Platform</span>
+            </div>
+          </div>
+          <div class="hidden xl:flex items-center gap-space-xs px-3 py-1.5 rounded-lg bg-surface-container-low text-primary font-label-md text-label-md font-semibold border border-surface-container">
+            <span class="material-symbols-outlined text-[16px] text-secondary">public</span>
+            <span>Citizen Public Portal</span>
+          </div>
+        </div>
+        <nav class="hidden lg:flex items-center gap-space-xs">
+          <a class="px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high font-label-md text-label-md transition-all" href="javascript:void(0)" onclick="scrollToReport()">Report Issue</a>
+          <a class="px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high font-label-md text-label-md transition-all" href="javascript:void(0)" onclick="scrollToReportsTab()">My Reports</a>
+          <a class="px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high font-label-md text-label-md transition-all" href="javascript:void(0)" onclick="scrollToHeroesTab()">Civic Heroes</a>
+          <a class="px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high font-label-md text-label-md transition-all" href="javascript:void(0)" onclick="showToast('Transparency portal coming soon!', 'success')">Transparency</a>
+        </nav>
+        <div class="flex items-center gap-space-sm">
+          <div class="flex items-center px-2 py-1 rounded-lg bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm font-semibold">
+            <span class="material-symbols-outlined text-[16px] mr-1">language</span>EN
+          </div>
+          <div class="flex items-center gap-space-sm pl-space-sm border-l border-outline-variant">
+            <button id="openAuthBtn" class="px-3 py-1.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md font-semibold shadow-sm hover:bg-primary transition-all">Sign In / Register</button>
+            <div id="userInfo" class="hidden flex items-center gap-space-sm">
+              <div class="flex flex-col text-right hidden sm:flex">
+                <span id="userNameDisplay" class="font-label-md text-label-md text-on-surface font-semibold"></span>
+                <span class="font-body-sm text-body-sm text-tertiary-container flex items-center justify-end gap-1"><span class="material-symbols-outlined text-[13px]">verified</span>Verified Resident</span>
+              </div>
+              <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div>
+              <button id="logoutBtn" class="px-2 py-1 rounded-lg bg-surface-container text-on-surface-variant font-label-sm text-label-sm hover:bg-surface-container-high transition-colors">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
 
-      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-      <link rel="stylesheet" href="style.css">
-    </head>
-    <body>
+    <main class="w-full pt-28 bg-background flex-1">
+      <div class="flex flex-col w-full">
+        <!-- Hero section -->
+        <section class="w-full bg-gradient-to-br from-surface-container to-surface-container-lowest px-margin py-space-xl border-b border-surface-container-high">
+          <div class="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-space-xl items-center">
+            <div class="flex flex-col gap-space-md">
+              <h1 class="font-display text-display text-on-surface">Report Municipal Issues <span class="text-primary">Instantly</span></h1>
+              <p class="font-body-lg text-body-lg text-on-surface-variant max-w-lg">Help keep our city safe and clean. Describe the issue in your own words, and our AI will automatically classify, route, and prioritize it for the right department.</p>
+              
+              <div class="flex flex-wrap gap-space-sm mt-space-sm">
+                <button onclick="insertTemplate('There is a large pothole on the northbound lane of...')" class="px-3 py-1.5 rounded-full border border-outline-variant text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-md text-label-md transition-colors">Pothole</button>
+                <button onclick="insertTemplate('Water main break flooding the street at...')" class="px-3 py-1.5 rounded-full border border-outline-variant text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-md text-label-md transition-colors">Water Main</button>
+                <button onclick="insertTemplate('A large tree branch has fallen across the sidewalk near...')" class="px-3 py-1.5 rounded-full border border-outline-variant text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-md text-label-md transition-colors">Fallen Tree</button>
+                <button onclick="insertTemplate('Streetlight is completely out on the corner of...')" class="px-3 py-1.5 rounded-full border border-outline-variant text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-md text-label-md transition-colors">Streetlight</button>
+                <button onclick="insertTemplate('Traffic signal flashing red in all directions at...')" class="px-3 py-1.5 rounded-full border border-outline-variant text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-md text-label-md transition-colors">Traffic Signal</button>
+                <button onclick="insertTemplate('Graffiti tag on the side of the public library building...')" class="px-3 py-1.5 rounded-full border border-outline-variant text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-md text-label-md transition-colors">Graffiti</button>
+              </div>
+            </div>
+            
+            <div class="bg-surface-container-lowest rounded-2xl shadow-lg border border-surface-container-high p-space-lg flex flex-col gap-space-md">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-space-xs text-primary font-label-md text-label-md font-semibold">
+                  <span class="material-symbols-outlined text-[20px]">smart_toy</span> AI Issue Reporter
+                </div>
+                <button onclick="clearPrompt()" class="text-on-surface-variant hover:text-error text-label-sm font-label-sm transition-colors">Clear</button>
+              </div>
+              
+              <div class="relative">
+                <textarea id="promptInput" rows="4" class="w-full bg-surface-container rounded-xl p-space-md text-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-secondary/50 resize-none" placeholder="Describe the issue... (e.g., 'There is a deep pothole on Main St that damaged my tire')"></textarea>
+                <button id="micBtn" onclick="toggleVoiceRecording()" class="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-secondary text-on-secondary flex items-center justify-center hover:bg-primary transition-colors shadow-sm">
+                  <span class="material-symbols-outlined text-[18px]">mic</span>
+                </button>
+              </div>
+              
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-space-sm">
+                  <button id="photoBtn" onclick="triggerPhotoUpload()" class="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-high font-label-sm text-label-sm transition-colors">
+                    <span class="material-symbols-outlined text-[16px]">add_a_photo</span> Add Photo
+                  </button>
+                  <button id="gpsBtn" class="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-high font-label-sm text-label-sm transition-colors">
+                    <span class="material-symbols-outlined text-[16px]">location_on</span> Attach GPS
+                  </button>
+                </div>
+                <button id="submitBtn" type="button" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary/90 transition-all shadow-md">
+                  <span class="material-symbols-outlined text-[20px]">send_spark</span>
+                  <span>Submit Incident Report</span>
+                </button>
+              </div>
 
-      <!-- Top Navbar -->
-      <header class="navbar">
-        <div class="container nav-content">
-          <div class="brand">
-            <div class="logo-badge">⚡</div>
-            <div>
-              <h1 class="logo">CivicFlow</h1>
-              <p class="tagline">AI-Powered City Assistant</p>
+              <!-- AI Classification Preview -->
+              <div class="mt-2 p-3 bg-surface-container-low border border-surface-container-high rounded-lg flex items-start gap-space-sm">
+                <span class="material-symbols-outlined text-secondary text-[20px] mt-0.5">auto_awesome</span>
+                <div>
+                  <h4 class="font-label-md text-label-md text-on-surface font-semibold">Real-Time AI Pre-Classification</h4>
+                  <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Start typing to see how our AI routes your request instantly.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- KPI Counter Bar -->
+        <section class="border-b border-surface-container-high bg-surface-container-lowest">
+          <div class="max-w-[1440px] mx-auto px-margin py-space-md grid grid-cols-2 md:grid-cols-4 gap-space-md divide-x divide-surface-container">
+            <div class="flex flex-col px-space-md first:pl-0">
+              <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Issues Resolved (30d)</span>
+              <div class="flex items-baseline gap-2 mt-1">
+                <span class="font-headline-lg text-headline-lg text-primary">1,248</span>
+                <span class="text-tertiary-container font-label-sm text-label-sm flex items-center"><span class="material-symbols-outlined text-[14px]">arrow_upward</span> 12%</span>
+              </div>
+            </div>
+            <div class="flex flex-col px-space-md">
+              <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Avg Resolution Time</span>
+              <div class="flex items-baseline gap-2 mt-1">
+                <span class="font-headline-lg text-headline-lg text-primary">2.4d</span>
+                <span class="text-tertiary-container font-label-sm text-label-sm flex items-center"><span class="material-symbols-outlined text-[14px]">arrow_downward</span> 8%</span>
+              </div>
+            </div>
+            <div class="flex flex-col px-space-md">
+              <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Active Civic Heroes</span>
+              <div class="flex items-baseline gap-2 mt-1">
+                <span class="font-headline-lg text-headline-lg text-primary">492</span>
+              </div>
+            </div>
+            <div class="flex flex-col px-space-md">
+              <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">City Budget Saved</span>
+              <div class="flex items-baseline gap-2 mt-1">
+                <span class="font-headline-lg text-headline-lg text-tertiary-container">$42.5k</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tabs -->
+        <section class="max-w-[1440px] mx-auto w-full px-margin py-space-lg flex-1">
+          <div class="flex gap-space-sm border-b border-surface-container-high mb-space-lg pb-2">
+            <button id="tabReportsBtn" onclick="switchPortalTab('reports')" class="px-4 py-2 rounded-lg bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold transition-colors">My Active Reports (4)</button>
+            <button id="tabHeroesBtn" onclick="switchPortalTab('heroes')" class="px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-label-md text-label-md font-semibold transition-colors">Civic Heroes Leaderboard</button>
+          </div>
+
+          <!-- Panel 1: Reports -->
+          <div id="panelReports" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-md">
+            <!-- Card 1 -->
+            <div class="bg-surface-container-lowest border border-surface-container-high rounded-xl p-space-md flex flex-col gap-space-sm shadow-sm hover:shadow-md transition-shadow">
+              <div class="flex items-center justify-between">
+                <span class="px-2 py-1 rounded bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm">INF-8422</span>
+                <span class="font-body-sm text-body-sm text-on-surface-variant">2 hrs ago</span>
+              </div>
+              <h3 class="font-title-md text-title-md text-on-surface">Deep Pothole on 4th Ave</h3>
+              <p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">Large pothole in the right lane going southbound. Causing cars to swerve dangerously.</p>
+              <div class="mt-auto pt-space-sm border-t border-surface-container flex items-center justify-between">
+                <div class="flex items-center gap-1 text-secondary font-label-sm text-label-sm">
+                  <span class="material-symbols-outlined text-[16px]">pending_actions</span> In Review
+                </div>
+                <button class="text-primary hover:underline font-label-sm text-label-sm">View Details</button>
+              </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="bg-surface-container-lowest border border-surface-container-high rounded-xl p-space-md flex flex-col gap-space-sm shadow-sm hover:shadow-md transition-shadow">
+              <div class="flex items-center justify-between">
+                <span class="px-2 py-1 rounded bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm">SNT-9104</span>
+                <span class="font-body-sm text-body-sm text-on-surface-variant">Yesterday</span>
+              </div>
+              <h3 class="font-title-md text-title-md text-on-surface">Missed Trash Pickup</h3>
+              <p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">Entire block of Elm St was skipped during yesterday's regular collection.</p>
+              <div class="mt-auto pt-space-sm border-t border-surface-container flex items-center justify-between">
+                <div class="flex items-center gap-1 text-primary font-label-sm text-label-sm">
+                  <span class="material-symbols-outlined text-[16px]">local_shipping</span> Scheduled
+                </div>
+                <button class="text-primary hover:underline font-label-sm text-label-sm">View Details</button>
+              </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="bg-surface-container-lowest border border-surface-container-high rounded-xl p-space-md flex flex-col gap-space-sm shadow-sm hover:shadow-md transition-shadow">
+              <div class="flex items-center justify-between">
+                <span class="px-2 py-1 rounded bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm">PRK-3319</span>
+                <span class="font-body-sm text-body-sm text-on-surface-variant">3 days ago</span>
+              </div>
+              <h3 class="font-title-md text-title-md text-on-surface">Broken Park Bench</h3>
+              <p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">Bench near the playground in Centennial Park has a broken slat, dangerous for kids.</p>
+              <div class="mt-auto pt-space-sm border-t border-surface-container flex flex-col gap-2">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1 text-tertiary-container font-label-sm text-label-sm">
+                    <span class="material-symbols-outlined text-[16px]">check_circle</span> Resolved
+                  </div>
+                  <button onclick="toggleResolutionProof('proof-3319')" class="text-primary hover:underline font-label-sm text-label-sm">View Proof</button>
+                </div>
+                <div id="proof-3319" class="hidden w-full h-24 bg-surface-container rounded flex items-center justify-center text-on-surface-variant text-label-sm">
+                  [Resolution Photo Attached]
+                </div>
+              </div>
+            </div>
+            
+            <!-- Card 4 -->
+            <div onclick="scrollToReport()" class="bg-surface-container-lowest border border-surface-container-high rounded-xl p-space-md flex flex-col gap-space-sm shadow-sm hover:shadow-md transition-shadow border-dashed border-2 bg-surface-container-low/50 items-center justify-center text-center cursor-pointer">
+              <span class="material-symbols-outlined text-outline text-[32px] mb-2">add_circle</span>
+              <h3 class="font-title-md text-title-md text-on-surface">Report New Issue</h3>
+              <p class="font-body-sm text-body-sm text-on-surface-variant">Help improve our community.</p>
             </div>
           </div>
 
-          <div class="auth-nav">
-            <button id="openAuthBtn" class="btn-secondary">Sign In / Register</button>
-            <div id="userInfo" class="user-pill hidden">
-              <span id="userNameDisplay" class="user-name">User</span>
-              <button id="logoutBtn" class="btn-logout">Logout</button>
+          <!-- Panel 2: Leaderboard -->
+          <div id="panelHeroes" class="hidden flex flex-col gap-space-lg">
+            <div class="flex items-end justify-center gap-space-md mt-space-md">
+              <!-- Silver -->
+              <div class="flex flex-col items-center gap-2">
+                <div class="w-12 h-12 rounded-full bg-surface-container border-4 border-outline-variant flex items-center justify-center shadow-md">
+                  <span class="font-title-md text-on-surface-variant font-bold">2</span>
+                </div>
+                <div class="h-24 w-20 bg-surface-container rounded-t-lg border border-surface-container-high flex flex-col items-center justify-end pb-2">
+                  <span class="font-label-sm text-label-sm text-on-surface font-semibold">@AlexM</span>
+                  <span class="text-primary font-label-sm text-label-sm">840 pts</span>
+                </div>
+              </div>
+              <!-- Gold -->
+              <div class="flex flex-col items-center gap-2">
+                <span class="material-symbols-outlined text-[#F59E0B] text-[32px] drop-shadow-md">military_tech</span>
+                <div class="w-16 h-16 rounded-full bg-[#FEF3C7] border-4 border-[#F59E0B] flex items-center justify-center shadow-lg">
+                  <span class="font-title-md text-[#B45309] font-bold">1</span>
+                </div>
+                <div class="h-32 w-24 bg-surface-container rounded-t-lg border border-surface-container-high flex flex-col items-center justify-end pb-2">
+                  <span class="font-label-md text-label-md text-on-surface font-bold">@SarahJ</span>
+                  <span class="text-[#D97706] font-label-sm text-label-sm font-bold">1,250 pts</span>
+                </div>
+              </div>
+              <!-- Bronze -->
+              <div class="flex flex-col items-center gap-2">
+                <div class="w-12 h-12 rounded-full bg-surface-container border-4 border-[#B45309]/50 flex items-center justify-center shadow-md">
+                  <span class="font-title-md text-[#78350F] font-bold">3</span>
+                </div>
+                <div class="h-20 w-20 bg-surface-container rounded-t-lg border border-surface-container-high flex flex-col items-center justify-end pb-2">
+                  <span class="font-label-sm text-label-sm text-on-surface font-semibold">@MikeD</span>
+                  <span class="text-[#92400E] font-label-sm text-label-sm">790 pts</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="w-full max-w-3xl mx-auto bg-surface-container-lowest border border-surface-container-high rounded-xl overflow-hidden">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-surface-container-low border-b border-surface-container-high">
+                    <th class="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase">Rank</th>
+                    <th class="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase">Citizen</th>
+                    <th class="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase">Issues Verified</th>
+                    <th class="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase">Impact Score</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-surface-container-high font-body-sm text-body-sm">
+                  <tr class="hover:bg-surface-container-low/50">
+                    <td class="p-3 font-semibold text-on-surface">4</td>
+                    <td class="p-3 text-on-surface">@ElenaR</td>
+                    <td class="p-3 text-on-surface-variant">42</td>
+                    <td class="p-3 font-semibold text-primary">620</td>
+                  </tr>
+                  <tr class="hover:bg-surface-container-low/50">
+                    <td class="p-3 font-semibold text-on-surface">5</td>
+                    <td class="p-3 text-on-surface">@DavidW</td>
+                    <td class="p-3 text-on-surface-variant">38</td>
+                    <td class="p-3 font-semibold text-primary">580</td>
+                  </tr>
+                  <tr class="hover:bg-surface-container-low/50">
+                    <td class="p-3 font-semibold text-on-surface">6</td>
+                    <td class="p-3 text-on-surface">@LocalBusiness1</td>
+                    <td class="p-3 text-on-surface-variant">35</td>
+                    <td class="p-3 font-semibold text-primary">510</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-surface-container-lowest border-t border-surface-container-high pt-space-xl pb-space-md px-margin mt-auto">
+      <div class="max-w-[1440px] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-lg mb-space-xl">
+        <div class="flex flex-col gap-space-sm">
+          <div class="flex items-center gap-space-xs">
+            <span class="font-title-md text-title-md text-primary tracking-tight font-bold">CivicFlow</span>
+          </div>
+          <p class="font-body-sm text-body-sm text-on-surface-variant">Empowering communities through transparent, AI-driven municipal intelligence and rapid issue resolution.</p>
+          <div class="flex gap-2 mt-2">
+            <div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-primary hover:text-on-primary transition-colors cursor-pointer"><span class="material-symbols-outlined text-[16px]">link</span></div>
+            <div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-primary hover:text-on-primary transition-colors cursor-pointer"><span class="material-symbols-outlined text-[16px]">share</span></div>
+          </div>
+        </div>
+        <div class="flex flex-col gap-space-sm">
+          <h4 class="font-label-md text-label-md text-on-surface font-semibold">Resources</h4>
+          <a href="javascript:void(0)" onclick="showToast('Page under construction', 'success')" class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors">How it Works</a>
+          <a href="javascript:void(0)" onclick="showToast('Page under construction', 'success')" class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors">Department Directory</a>
+          <a href="javascript:void(0)" onclick="showToast('Page under construction', 'success')" class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors">Open Data Portal</a>
+          <a href="javascript:void(0)" onclick="showToast('Page under construction', 'success')" class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors">City Council</a>
+        </div>
+        <div class="flex flex-col gap-space-sm">
+          <h4 class="font-label-md text-label-md text-on-surface font-semibold">Compliance & Privacy</h4>
+          <div class="flex gap-2 mb-1">
+            <span class="px-2 py-1 rounded bg-surface-container text-on-surface-variant font-label-sm text-label-sm border border-surface-container-high">SOC2 Type II</span>
+            <span class="px-2 py-1 rounded bg-surface-container text-on-surface-variant font-label-sm text-label-sm border border-surface-container-high">ADA Compliant</span>
+          </div>
+          <a href="javascript:void(0)" onclick="showToast('Page under construction', 'success')" class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors">Privacy Policy</a>
+          <a href="javascript:void(0)" onclick="showToast('Page under construction', 'success')" class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors">Terms of Service</a>
+        </div>
+        <div class="flex flex-col gap-space-sm">
+          <h4 class="font-label-md text-label-md text-on-surface font-semibold">Emergency Contacts</h4>
+          <div class="p-3 bg-error-container/30 border border-error/20 rounded-lg flex flex-col gap-1">
+            <span class="font-label-sm text-label-sm text-on-surface">Life Threatening: <strong class="text-error">911</strong></span>
+            <span class="font-label-sm text-label-sm text-on-surface">Non-Emergency Police: <strong>311</strong></span>
+            <span class="font-label-sm text-label-sm text-on-surface">Poison Control: <strong>800-222-1222</strong></span>
+          </div>
+        </div>
+      </div>
+      <div class="max-w-[1440px] mx-auto pt-space-md border-t border-surface-container flex flex-col md:flex-row items-center justify-between gap-space-sm font-body-sm text-body-sm text-on-surface-variant">
+        <span>&copy; 2024 CivicFlow Municipal Platform. All rights reserved.</span>
+        <span>Metro District 4 Installation v2.4.1</span>
+      </div>
+    </footer>
+
+    <!-- Functions moved to app.js -->
+  </div>
+
+  <div id="adminPortal" style="display: none;">
+    <!-- Sidebar -->
+    <aside class="fixed left-0 top-0 bottom-0 w-64 bg-surface-container-lowest border-r border-surface-container-high flex flex-col z-40">
+      <div class="h-16 flex items-center px-space-md border-b border-surface-container-high">
+        <span class="font-title-md text-title-md text-primary font-bold">CivicFlow <span class="text-on-surface-variant font-normal">Command</span></span>
+      </div>
+      <nav id="adminSidebar" class="flex-1 overflow-y-auto py-space-md flex flex-col gap-1 px-3">
+        <a href="javascript:void(0)" data-view="dashboard" onclick="switchAdminView('dashboard');" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-secondary-container text-on-secondary-container font-label-md text-label-md transition-colors">
+          <span class="material-symbols-outlined text-[20px]">dashboard</span> Dashboard
+        </a>
+        <a href="javascript:void(0)" data-view="map" onclick="switchAdminView('map');" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-label-md text-label-md transition-colors">
+          <span class="material-symbols-outlined text-[20px]">map</span> Live GIS Map
+        </a>
+        <a href="javascript:void(0)" data-view="triage" onclick="switchAdminView('triage');" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-label-md text-label-md transition-colors">
+          <span class="material-symbols-outlined text-[20px]">format_list_bulleted</span> Triage Queue <span id="triageBadge" class="ml-auto bg-error text-on-error px-1.5 rounded-full text-[10px]">0</span>
+        </a>
+        <a href="javascript:void(0)" onclick="loadAdminDashboard(); showToast('Data refreshed', 'success');" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-label-md text-label-md transition-colors">
+          <span class="material-symbols-outlined text-[20px]">refresh</span> Refresh Data
+        </a>
+        <div class="mt-space-lg mb-2 px-3">
+          <span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Actions</span>
+        </div>
+        <a href="javascript:void(0)" onclick="exportCSV();" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-label-md text-label-md transition-colors">
+          <span class="material-symbols-outlined text-[20px]">download</span> Export CSV
+        </a>
+      </nav>
+      <div class="p-space-md border-t border-surface-container-high">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">admin_panel_settings</span></div>
+            <div class="flex flex-col">
+              <span class="font-label-md text-label-md text-on-surface font-semibold" id="adminUserName">Admin User</span>
+              <span class="font-body-sm text-body-sm text-on-surface-variant" id="adminUserRole">ADMIN</span>
+            </div>
+          </div>
+          <button id="adminLogoutBtn" class="p-1.5 rounded-lg bg-surface-container hover:bg-error/10 hover:text-error text-on-surface-variant transition-colors" title="Logout">
+            <span class="material-symbols-outlined text-[18px]">logout</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <div class="pl-64 flex flex-col min-h-screen bg-background">
+      <!-- Admin Header -->
+      <header class="h-16 bg-surface-container-lowest border-b border-surface-container-high flex items-center justify-between px-margin sticky top-0 z-30">
+        <div class="flex items-center gap-space-md">
+          <h2 class="font-title-md text-title-md text-on-surface font-semibold">District 4 Operations Center</h2>
+          <span class="px-2 py-0.5 rounded bg-tertiary-container/10 text-tertiary-container font-label-sm text-label-sm flex items-center gap-1 border border-tertiary-container/20"><span class="w-1.5 h-1.5 rounded-full bg-tertiary-container animate-ping"></span>System Healthy</span>
+        </div>
+        <div class="flex items-center gap-space-md">
+          <div id="adminClock" class="font-label-md text-label-md text-on-surface-variant tabular-nums bg-surface-container px-3 py-1 rounded"></div>
+          <button onclick="loadAdminDashboard()" class="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors" title="Refresh">
+            <span class="material-symbols-outlined text-[20px]">refresh</span>
+          </button>
         </div>
       </header>
 
-      <main class="container">
-
-        <!-- ================= 1. CITIZEN AI-PROMPT PORTAL ================= -->
-        <div id="citizenPortal" class="portal-section">
-          <div class="hero-banner">
-            <h2>What civic problem did you notice today?</h2>
-            <p>Type in your own words or click the mic to speak. Our AI handles classification, prioritization & dispatch automatically.</p>
-          </div>
-
-          <!-- Navigation Tabs -->
-          <div class="citizen-tabs">
-            <button id="tabNewReport" class="citizen-tab active">💬 Describe or Speak Issue</button>
-            <button id="tabMyReports" class="citizen-tab">📋 Track My Reports</button>
-          </div>
-
-          <!-- AI Prompt Card -->
-          <section id="reportFormSection" class="card prompt-card">
-            <form id="complaintForm">
-
-              <!-- Single Intelligent Natural Language Prompt Area -->
-              <div class="prompt-box-wrapper">
-                <label for="promptInput" class="prompt-label">
-                  <span>Tell AI about the issue (Paragraph or Speech)</span>
-                  <button type="button" id="voiceBtn" class="btn-voice">
-                    <span class="mic-icon">🎙️</span>
-                    <span id="voiceBtnText">Click to Speak</span>
-                  </button>
-                </label>
-
-                <textarea
-                  id="promptInput"
-                  rows="5"
-                  placeholder="e.g., A heavy vehicle hit the electric pole on 4th Cross Road. Sparking wires are dangling over the pavement
-  and it's dangerous for school kids..."
-                  required
-                ></textarea>
-                <p id="voiceStatus" class="voice-status-text"></p>
-              </div>
-
-              <!-- Location & Photo Bar -->
-              <div class="prompt-meta-grid">
-                <div class="form-group flex-1">
-                  <div class="label-with-action">
-                    <label for="location">📍 Location / Landmark <span class="required">*</span></label>
-                    <button type="button" id="geoBtn" class="btn-geo">📍 Auto GPS</button>
-                  </div>
-                  <input type="text" id="location" placeholder="e.g., In front of Metro Gate 2" required>
-                  <input type="hidden" id="latitude">
-                  <input type="hidden" id="longitude">
-                  <p id="geoStatus" class="geo-status-text"></p>
-                </div>
-
-                <div class="form-group flex-1">
-                  <label for="image">📷 Attach Photo <span class="optional">(Optional)</span></label>
-                  <input type="file" id="image" accept="image/*">
-                </div>
-              </div>
-
-              <button type="submit" id="submitBtn" class="btn-ai-submit">
-                <span>🚀 Submit & Analyze with AI</span>
-              </button>
-            </form>
-
-            <div id="statusMessage" class="status-box hidden"></div>
-          </section>
-
-          <!-- Citizen's Personal Submissions -->
-          <section id="myReportsSection" class="card hidden">
-            <div class="section-header">
-              <h3>Your Submitted Complaints</h3>
-              <span id="myReportCount" class="badge badge-neutral">0 reports</span>
-            </div>
-            <div id="myComplaintsList" class="complaints-list">
-              <p class="loading-text">Please sign in to track your personal reports.</p>
-            </div>
-          </section>
+      <!-- SECTION: Dashboard (default) -->
+      <main id="section-dashboard" class="admin-section p-margin flex-1 flex flex-col gap-space-lg">
+        <!-- KPIs -->
+        <div id="adminKPIs" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-md">
+          <div class="bg-surface-container-lowest border border-surface-container-high rounded-xl p-space-md shadow-sm animate-pulse h-24"></div>
+          <div class="bg-surface-container-lowest border border-surface-container-high rounded-xl p-space-md shadow-sm animate-pulse h-24"></div>
+          <div class="bg-surface-container-lowest border border-surface-container-high rounded-xl p-space-md shadow-sm animate-pulse h-24"></div>
+          <div class="bg-surface-container-lowest border border-surface-container-high rounded-xl p-space-md shadow-sm animate-pulse h-24"></div>
         </div>
 
-        <!-- ================= 2. ADMIN & DEPARTMENT DASHBOARD ================= -->
-        <div id="adminPortal" class="portal-section hidden">
-          <div class="dashboard-header">
-            <div>
-              <h2 class="dash-title">City Operations Command Center</h2>
-              <p class="dash-subtitle">Real-time triage, AI prioritization, and department dispatching</p>
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-space-lg flex-1 min-h-[400px]">
+          <!-- Triage Queue Table -->
+          <div class="xl:col-span-2 bg-surface-container-lowest border border-surface-container-high rounded-xl shadow-sm flex flex-col">
+            <div class="p-space-md border-b border-surface-container-high flex items-center justify-between">
+              <h3 class="font-title-md text-title-md text-on-surface font-semibold">Live AI Triage Queue</h3>
+              <div class="flex gap-2">
+                <button onclick="showAdminFilter()" class="px-3 py-1.5 rounded bg-surface-container text-on-surface-variant font-label-sm text-label-sm hover:bg-surface-container-high transition-colors flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[14px]">filter_list</span> Filter
+                </button>
+                <button onclick="exportCSV()" class="px-3 py-1.5 rounded bg-surface-container text-on-surface-variant font-label-sm text-label-sm hover:bg-surface-container-high transition-colors flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[14px]">download</span> Export
+                </button>
+              </div>
             </div>
-            <span class="badge badge-admin">⚡ Authorized Personnel</span>
-          </div>
-
-          <!-- KPI Analytics Grid -->
-          <div class="stats-grid">
-            <div class="stat-card"><span class="stat-label">Total Reports</span><span id="statTotal" class="stat-val">0</span></div>
-            <div class="stat-card stat-pending"><span class="stat-label">Pending</span><span id="statPending" class="stat-val">0</span></div>
-            <div class="stat-card stat-progress"><span class="stat-label">In Progress</span><span id="statInProgress" class="stat-
-  val">0</span></div>
-            <div class="stat-card stat-resolved"><span class="stat-label">Resolved</span><span id="statResolved" class="stat-
-  val">0</span></div>
-            <div class="stat-card stat-high"><span class="stat-label">🚨 High Hazard</span><span id="statHigh" class="stat-val">0</span></div>
-          </div>
-
-          <!-- City Map -->
-          <div class="card map-card">
-            <div class="section-header">
-              <h3>🗺️ Real-Time City Geospatial Map</h3>
-              <span class="count-badge">Live GPS Pinned</span>
+            <div class="overflow-x-auto flex-1">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-surface-container-low border-b border-surface-container-high">
+                    <th class="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase">ID</th>
+                    <th class="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase">Priority</th>
+                    <th class="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase">Category</th>
+                    <th class="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase">Location</th>
+                    <th class="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase">Status</th>
+                    <th class="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase">Time</th>
+                    <th class="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="triageTableBody" class="divide-y divide-surface-container-high font-body-sm text-body-sm">
+                  <tr><td colspan="7" class="p-8 text-center text-on-surface-variant">Loading complaints...</td></tr>
+                </tbody>
+              </table>
             </div>
-            <div id="map" class="map-container"></div>
-          </div>
-
-          <!-- Filter Controls -->
-          <div class="card filter-card">
-            <div class="filter-toolbar">
-              <div class="filter-item">
-                <label for="filterDept">Department:</label>
-                <select id="filterDept" class="filter-select">
-                  <option value="ALL">All Departments</option>
-                  <option value="Roads">Roads</option>
-                  <option value="Electricity">Electricity</option>
-                  <option value="Sanitation">Sanitation</option>
-                  <option value="Water">Water</option>
-                </select>
-              </div>
-
-              <div class="filter-item">
-                <label for="filterStatus">Status:</label>
-                <select id="filterStatus" class="filter-select">
-                  <option value="ALL">All Statuses</option>
-                  <option value="PENDING">PENDING</option>
-                  <option value="ASSIGNED">ASSIGNED</option>
-                  <option value="IN_PROGRESS">IN PROGRESS</option>
-                  <option value="RESOLVED">RESOLVED</option>
-                </select>
-              </div>
-
-              <div class="filter-item">
-                <label for="filterPriority">Priority:</label>
-                <select id="filterPriority" class="filter-select">
-                  <option value="ALL">All Priorities</option>
-                  <option value="HIGH">🚨 HIGH</option>
-                  <option value="MEDIUM">⚡ MEDIUM</option>
-                  <option value="LOW">ℹ️ LOW</option>
-                </select>
-              </div>
+            <!-- Pagination -->
+            <div class="mt-auto p-space-md border-t border-surface-container-high flex items-center justify-between">
+              <span id="paginationInfo" class="font-body-sm text-body-sm text-on-surface-variant">Loading...</span>
+              <div id="paginationBtns" class="flex gap-1"></div>
             </div>
           </div>
 
-          <!-- Work Queue -->
-          <div class="section-header" style="margin-top: 24px;">
-            <h3>Complaint Management Work Queue</h3>
-            <span id="adminComplaintCount" class="badge badge-neutral">0 issues</span>
-          </div>
-          <div id="adminComplaintsList" class="complaints-list">
-            <p class="loading-text">Loading management feed...</p>
+          <!-- GIS & Spotlight -->
+          <div class="flex flex-col gap-space-lg">
+            <div class="bg-surface-container-lowest border border-surface-container-high rounded-xl shadow-sm flex flex-col h-64 relative overflow-hidden">
+              <div id="mapOverlay" class="absolute inset-0 bg-surface-container-high/50 flex items-center justify-center z-10 pointer-events-none">
+                <span class="px-3 py-1.5 rounded-lg bg-surface-container-lowest text-on-surface font-label-md shadow-md flex items-center gap-2"><span class="material-symbols-outlined text-secondary">map</span> Map Loading...</span>
+              </div>
+              <div id="adminMap" class="w-full h-full bg-surface-variant"></div>
+            </div>
+            
+            <div id="incidentSpotlight" class="bg-surface-container-lowest border border-surface-container-high rounded-xl shadow-sm p-space-md flex-1">
+              <p class="text-on-surface-variant text-center py-4">Loading incident data...</p>
+            </div>
           </div>
         </div>
-
       </main>
 
-      <!-- Auth Modal -->
-      <div id="authModal" class="modal-overlay hidden">
-        <div class="modal-box">
-          <button id="closeAuthBtn" class="modal-close">&times;</button>
-
-          <div class="modal-tabs">
-            <button id="tabLogin" class="tab-btn active">Sign In</button>
-            <button id="tabRegister" class="tab-btn">Create Citizen Account</button>
-          </div>
-
-          <form id="loginForm" class="auth-form">
-            <div class="form-group">
-              <label for="loginEmail">Email Address</label>
-              <input type="email" id="loginEmail" placeholder="e.g., citizen@example.com or admin@civicflow.org" required>
-            </div>
-            <div class="form-group">
-              <label for="loginPassword">Password</label>
-              <input type="password" id="loginPassword" placeholder="Enter password" required>
-            </div>
-            <button type="submit" class="btn-primary">Sign In to CivicFlow</button>
-          </form>
-
-          <form id="registerForm" class="auth-form hidden">
-            <div class="form-group">
-              <label for="regName">Full Name</label>
-              <input type="text" id="regName" placeholder="e.g., Jane Doe" required>
-            </div>
-            <div class="form-group">
-              <label for="regEmail">Email Address</label>
-              <input type="email" id="regEmail" placeholder="e.g., jane@example.com" required>
-            </div>
-            <div class="form-group">
-              <label for="regPassword">Password</label>
-              <input type="password" id="regPassword" minlength="6" placeholder="Min 6 characters" required>
-            </div>
-            <button type="submit" class="btn-primary">Register Citizen Account</button>
-          </form>
-
-          <div id="authStatus" class="status-box hidden"></div>
+      <!-- SECTION: Full Map View -->
+      <main id="section-map" class="admin-section p-margin flex-1 flex flex-col gap-space-lg" style="display:none;">
+        <h2 class="font-title-md text-title-md text-on-surface font-semibold">Live GIS Map</h2>
+        <div class="bg-surface-container-lowest border border-surface-container-high rounded-xl shadow-sm h-[calc(100vh-200px)] overflow-hidden">
+          <div id="adminMapFull" class="w-full h-full"></div>
         </div>
-      </div>
+      </main>
 
-      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-      <script src="app.js"></script>
-    </body>
-    </html>
+      <!-- SECTION: Triage Full View -->
+      <main id="section-triage" class="admin-section p-margin flex-1 flex flex-col gap-space-lg" style="display:none;">
+        <div class="flex items-center justify-between">
+          <h2 class="font-title-md text-title-md text-on-surface font-semibold">Full Triage Queue</h2>
+          <div class="flex gap-2">
+            <button onclick="showAdminFilter()" class="px-3 py-1.5 rounded bg-surface-container text-on-surface-variant font-label-sm text-label-sm hover:bg-surface-container-high transition-colors flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">filter_list</span> Filter
+            </button>
+            <button onclick="exportCSV()" class="px-3 py-1.5 rounded bg-primary text-on-primary font-label-sm text-label-sm hover:bg-primary/90 transition-colors flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">download</span> Export All
+            </button>
+          </div>
+        </div>
+        <div class="bg-surface-container-lowest border border-surface-container-high rounded-xl shadow-sm flex-1 overflow-auto">
+          <div id="triageFullList" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-space-md p-space-md">
+            <p class="col-span-full text-center text-on-surface-variant py-8">Loading...</p>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Filter Modal -->
+    <div id="filterModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] hidden flex items-center justify-center">
+      <div class="bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-space-lg">
+        <h3 class="font-title-md text-title-md text-on-surface font-semibold mb-space-md">Filter Complaints</h3>
+        <div class="space-y-space-md">
+          <div>
+            <label class="font-label-md text-label-md text-on-surface block mb-1">Status</label>
+            <select id="filterStatus" class="w-full px-3 py-2 rounded-lg bg-surface-container text-on-surface font-body-md">
+              <option value="ALL">All Statuses</option>
+              <option value="PENDING">Pending</option>
+              <option value="ASSIGNED">Assigned</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="RESOLVED">Resolved</option>
+            </select>
+          </div>
+          <div>
+            <label class="font-label-md text-label-md text-on-surface block mb-1">Department</label>
+            <select id="filterDept" class="w-full px-3 py-2 rounded-lg bg-surface-container text-on-surface font-body-md">
+              <option value="ALL">All Departments</option>
+              <option value="Roads">Roads</option>
+              <option value="Water">Water</option>
+              <option value="Electricity">Electricity</option>
+              <option value="Sanitation">Sanitation</option>
+              <option value="General Maintenance">General Maintenance</option>
+            </select>
+          </div>
+          <div>
+            <label class="font-label-md text-label-md text-on-surface block mb-1">Priority</label>
+            <select id="filterPriority" class="w-full px-3 py-2 rounded-lg bg-surface-container text-on-surface font-body-md">
+              <option value="ALL">All Priorities</option>
+              <option value="HIGH">High</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="LOW">Low</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex gap-2 mt-space-lg">
+          <button onclick="resetAdminFilter()" class="flex-1 py-2 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container transition-colors">Reset</button>
+          <button onclick="applyAdminFilter()" class="flex-1 py-2 rounded-lg bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary/90 transition-colors">Apply</button>
+        </div>
+        <button onclick="closeAdminFilter()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-surface-container hover:bg-surface-container-high flex items-center justify-center text-on-surface-variant transition-colors">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth Modal -->
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] hidden flex items-center justify-center" id="authModal">
+    <div class="bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-md mx-4 p-space-lg relative">
+      <button class="absolute top-4 right-4 w-8 h-8 rounded-full bg-surface-container hover:bg-surface-container-high flex items-center justify-center text-on-surface-variant transition-colors" id="closeAuthBtn">
+        <span class="material-symbols-outlined text-[18px]">close</span>
+      </button>
+      <div class="flex items-center gap-space-xs mb-space-lg">
+        <span class="font-title-md text-title-md text-primary font-bold">CivicFlow</span>
+        <span class="font-body-sm text-body-sm text-on-surface-variant">Citizen Access</span>
+      </div>
+      <div class="flex mb-space-md p-1 rounded-xl bg-surface-container">
+        <button class="flex-1 py-2 rounded-lg bg-surface-container-lowest text-primary font-label-md text-label-md font-semibold shadow-sm transition-all" id="tabLogin">Sign In</button>
+        <button class="flex-1 py-2 rounded-lg text-on-surface-variant font-label-md text-label-md transition-all hover:text-on-surface" id="tabRegister">Create Account</button>
+      </div>
+      <form id="loginForm" class="space-y-space-md">
+        <div>
+          <label class="font-label-md text-label-md text-on-surface block mb-1" for="loginEmail">Email Address</label>
+          <input class="w-full px-3 py-2.5 rounded-lg bg-surface-container text-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-secondary/40" id="loginEmail" placeholder="citizen@example.com or admin@civicflow.org" required type="email"/>
+        </div>
+        <div>
+          <label class="font-label-md text-label-md text-on-surface block mb-1" for="loginPassword">Password</label>
+          <input class="w-full px-3 py-2.5 rounded-lg bg-surface-container text-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-secondary/40" id="loginPassword" placeholder="Enter password" required type="password"/>
+        </div>
+        <button class="w-full py-2.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md font-semibold shadow-md hover:bg-primary transition-all" type="submit">Sign In to CivicFlow</button>
+      </form>
+      <form id="registerForm" class="hidden space-y-space-md">
+        <div>
+          <label class="font-label-md text-label-md text-on-surface block mb-1" for="regName">Full Name</label>
+          <input class="w-full px-3 py-2.5 rounded-lg bg-surface-container text-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-secondary/40" id="regName" placeholder="Jane Doe" required type="text"/>
+        </div>
+        <div>
+          <label class="font-label-md text-label-md text-on-surface block mb-1" for="regEmail">Email Address</label>
+          <input class="w-full px-3 py-2.5 rounded-lg bg-surface-container text-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-secondary/40" id="regEmail" placeholder="jane@example.com" required type="email"/>
+        </div>
+        <div>
+          <label class="font-label-md text-label-md text-on-surface block mb-1" for="regPassword">Password</label>
+          <input class="w-full px-3 py-2.5 rounded-lg bg-surface-container text-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-secondary/40" id="regPassword" minlength="6" placeholder="Min 6 characters" required type="password"/>
+        </div>
+        <button class="w-full py-2.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md font-semibold shadow-md hover:bg-primary transition-all" type="submit">Register Citizen Account</button>
+      </form>
+      <div class="hidden mt-space-md p-3 rounded-lg text-center font-body-sm text-body-sm" id="authStatus"></div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

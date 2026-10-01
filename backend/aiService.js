@@ -92,13 +92,128 @@
         ? `🚨 Critical hazard identified in ${category} domain. Immediate field dispatch recommended.`
         : `⚠️ Standard ${category} issue identified. Routed to ${department} team.`;
 
-      return {
-        title: title,
-        category: category,
-        suggestedDepartment: department,
-        priority: priority,
-        aiSummary: summary
-      };
-    }
+  return {
+    title: title,
+    category: category,
+    suggestedDepartment: department,
+    priority: priority,
+    aiSummary: summary
+  };
+}
 
-    module.exports = { analyzeComplaint };
+/**
+ * Task 1: Verify if an uploaded image depicts a genuine civic issue.
+ * @param {string} base64Image - Base64 string of the image.
+ * @param {string} mimeType - The mime type of the image.
+ * @returns {Promise<{is_valid: boolean, reason: string}>}
+ */
+async function verifyImage(base64Image, mimeType = 'image/jpeg') {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || apiKey === 'your_actual_gemini_api_key_here') {
+    return { is_valid: true, reason: 'AI disabled, assuming valid.' };
+  }
+
+  try {
+    console.log('🤖 Sending image to Google Gemini Multimodal Vision for verification...');
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              {
+                text: `You are an expert municipal AI. Look at this image. Determine if it shows a genuine civic issue (e.g., pothole, broken pipe, illegal dumping, damaged infrastructure) or if it is a fake, meme, random photo, or inappropriate.
+Respond ONLY with a valid JSON object (no markdown) matching this exact schema:
+{
+  "is_valid": true or false,
+  "reason": "Short explanation of why it is valid or fake"
+}`
+              },
+              {
+                inlineData: {
+                  mimeType: mimeType,
+                  data: base64Image
+                }
+              }
+            ]
+          }]
+        })
+      }
+    );
+
+    const data = await response.json();
+    if (data.candidates && data.candidates[0].content.parts[0].text) {
+      const rawOutput = data.candidates[0].content.parts[0].text;
+      const cleanJson = rawOutput.replace(/```json|```/g, '').trim();
+      const result = JSON.parse(cleanJson);
+      console.log('✅ Image verification complete:', result);
+      return result;
+    }
+    return { is_valid: false, reason: 'Could not parse response.' };
+  } catch (err) {
+    console.warn('⚠️ Gemini Image Verification failed:', err.message);
+    return { is_valid: true, reason: 'Error during verification, failing open.' };
+  }
+}
+
+/**
+ * Task 2: Check if a new report is a duplicate of a nearby pending report.
+ * @param {string} newReportText - The description of the new report.
+ * @param {Array<{id: number|string, description: string}>} nearbyReports - List of nearby pending reports.
+ * @returns {Promise<number|string|null>} - The matching report ID if duplicate, or null.
+ */
+async function checkIncidentFusion(newReportText, nearbyReports) {
+  if (!nearbyReports || nearbyReports.length === 0) return null;
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || apiKey === 'your_actual_gemini_api_key_here') return null;
+
+  try {
+    console.log('🤖 Sending incident fusion prompt to Google Gemini AI model...');
+    const nearbyList = nearbyReports.map(r => `ID: ${r.id} - Description: ${r.description}`).join('\n');
+    const prompt = `You are an expert municipal AI deduplication agent.
+A new civic issue was reported:
+"${newReportText}"
+
+Here are existing pending reports within 100 meters:
+${nearbyList}
+
+Are any of these describing the exact same physical incident as the new report?
+Respond ONLY with a valid JSON object (no markdown) matching this exact schema:
+{
+  "is_duplicate": true or false,
+  "matching_report_id": "the ID of the matching report if is_duplicate is true, else null",
+  "reason": "Short explanation"
+}`;
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      }
+    );
+
+    const data = await response.json();
+    if (data.candidates && data.candidates[0].content.parts[0].text) {
+      const rawOutput = data.candidates[0].content.parts[0].text;
+      const cleanJson = rawOutput.replace(/```json|```/g, '').trim();
+      const result = JSON.parse(cleanJson);
+      console.log('✅ Incident fusion analysis complete:', result);
+      
+      if (result.is_duplicate && result.matching_report_id) {
+        return result.matching_report_id;
+      }
+    }
+    return null;
+  } catch (err) {
+    console.warn('⚠️ Gemini Incident Fusion failed:', err.message);
+    return null;
+  }
+}
+
+module.exports = { analyzeComplaint, verifyImage, checkIncidentFusion };

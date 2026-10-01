@@ -10,6 +10,7 @@
             "bcryptjs": "^3.0.3",
             "cors": "^2.8.6",
             "dotenv": "^17.4.2",
+            "exifr": "^7.1.3",
             "express": "^4.19.2",
             "jsonwebtoken": "^9.0.3",
             "multer": "^2.2.0",

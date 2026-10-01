@@ -7,7 +7,8 @@
     const fs = require('fs');
     const multer = require('multer');
     const db = require('./db');
-    const { analyzeComplaint } = require('./aiService');
+    const { analyzeComplaint, verifyImage, checkIncidentFusion } = require('./aiService');
+    const { verifyImageLocation } = require('./locationVerification');
 
     const app = express();
     const PORT = process.env.PORT || 5000;
@@ -138,7 +139,7 @@
     });
 
     // AI Complaint Ingestion
-    app.post('/api/complaints', optionalAuth, upload.single('image'), async (req, res) => {
+    app.post('/api/complaints', optionalAuth, upload.single('image'), verifyImageLocation, async (req, res) => {
       const { prompt, location, latitude, longitude } = req.body;
       const userId = req.user ? req.user.id : null;
       const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
@@ -150,15 +151,99 @@
         return res.status(400).json({ success: false, error: 'Please describe the problem and provide a location.' });
       }
 
+      // ==== 1. IMAGE VERIFICATION ====
+      if (req.file) {
+        try {
+          const base64Image = fs.readFileSync(req.file.path, { encoding: 'base64' });
+          const verification = await verifyImage(base64Image, req.file.mimetype);
+          
+          if (!verification.is_valid) {
+            // Remove file if invalid
+            fs.unlinkSync(req.file.path);
+            return res.status(400).json({ 
+              success: false, 
+              error: 'Image rejected by AI verification.', 
+              reason: verification.reason 
+            });
+          }
+        } catch (err) {
+          console.error('Error during image verification:', err);
+        }
+      }
+
       try {
+        let trustScore = 50;
+        let isShadowbanned = false;
+
+        if (userId) {
+          // 1. Query the database to find the user's trust_score
+          const userRes = await db.query('SELECT trust_score FROM users WHERE id = $1;', [userId]);
+          if (userRes.rows.length > 0) {
+            trustScore = userRes.rows[0].trust_score;
+          }
+
+          if (trustScore < 0) {
+            // Shadowban logic: allow DB insert to succeed, flag as SHADOWBANNED, bypass limits
+            isShadowbanned = true;
+          } else {
+            // 2. Calculate dynamic daily limit
+            // Base limit is 3. For every 20 trust score points above 50, +1 daily report.
+            let dailyLimit = 3;
+            if (trustScore > 50) {
+              dailyLimit += Math.floor((trustScore - 50) / 20);
+            }
+
+            // 3. Check reports submitted in the last 24 hours
+            const countQuery = `
+              SELECT COUNT(*) as count 
+              FROM complaints 
+              WHERE user_id = $1 AND created_at >= datetime('now', '-1 day');
+            `;
+            const countRes = await db.query(countQuery, [userId]);
+            const reportCount = countRes.rows[0].count;
+
+            // 4. Rate limit check
+            if (reportCount >= dailyLimit) {
+              return res.status(429).json({ 
+                success: false, 
+                error: `You have reached your daily limit of ${dailyLimit} reports. Earn more trust to submit more.` 
+              });
+            }
+          }
+        }
+
         const ai = await analyzeComplaint(prompt);
+        
+        // ==== 2. INCIDENT FUSION ====
+        let parentIncidentId = null;
+        if (lat !== null && lng !== null) {
+          // Find pending reports within roughly ~100m using simple bounding box for SQLite
+          // 1 degree lat/lng is roughly 111km, so 100m is ~0.0009 degrees
+          const threshold = 0.0009; 
+          const nearbyQuery = `
+            SELECT id, description 
+            FROM complaints 
+            WHERE status = 'PENDING' 
+              AND latitude BETWEEN $1 AND $2 
+              AND longitude BETWEEN $3 AND $4
+            ORDER BY created_at DESC LIMIT 5;
+          `;
+          const nearbyRes = await db.query(nearbyQuery, [
+            lat - threshold, lat + threshold,
+            lng - threshold, lng + threshold
+          ]);
+          
+          if (nearbyRes.rows.length > 0) {
+            parentIncidentId = await checkIncidentFusion(prompt, nearbyRes.rows);
+          }
+        }
 
         const sqlQuery = `
           INSERT INTO complaints (
             title, category, description, location, latitude, longitude, image_url, user_id,
-            assigned_department, priority, status, ai_summary
+            assigned_department, priority, status, ai_summary, parent_incident_id
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'PENDING', $11)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
           RETURNING *;
         `;
         const values = [
@@ -172,7 +257,9 @@
           userId,
           ai.suggestedDepartment,
           ai.priority,
-          ai.aiSummary
+          isShadowbanned ? 'SHADOWBANNED' : 'PENDING',
+          ai.aiSummary,
+          parentIncidentId
         ];
 
         const result = await db.query(sqlQuery, values);

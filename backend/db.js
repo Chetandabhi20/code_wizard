@@ -33,11 +33,38 @@ module.exports = {
     const sqliteText = text.replace(/\$\d+/g, '?');
     
     // Determine if query expects to return rows
-    const isSelect = sqliteText.trim().match(/^(SELECT|WITH)/i) || sqliteText.toUpperCase().includes('RETURNING');
+    const trimmed = sqliteText.trim();
+    const isSelect = trimmed.match(/^(SELECT|WITH)/i);
+    const hasReturning = trimmed.toUpperCase().includes('RETURNING');
     
     if (isSelect) {
         const rows = await db.all(sqliteText, params);
         return { rows, rowCount: rows.length };
+    } else if (hasReturning) {
+        // Try RETURNING first (SQLite 3.35+), fall back to manual SELECT
+        try {
+            const rows = await db.all(sqliteText, params);
+            return { rows, rowCount: rows.length };
+        } catch (e) {
+            // Fallback: run without RETURNING, then SELECT the affected row
+            const withoutReturning = sqliteText.replace(/\s+RETURNING\s+.*/i, ';');
+            const result = await db.run(withoutReturning, params);
+            
+            // Determine table name from query
+            const tableMatch = trimmed.match(/(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+(\w+)/i);
+            const table = tableMatch ? tableMatch[1] : null;
+            
+            if (table && result.lastID) {
+                const rows = await db.all(`SELECT * FROM ${table} WHERE id = ?`, [result.lastID]);
+                return { rows, rowCount: rows.length };
+            } else if (table && result.changes > 0) {
+                // For UPDATE/DELETE, try to get the row using the last param (usually the id)
+                const idParam = params[params.length - 1];
+                const rows = await db.all(`SELECT * FROM ${table} WHERE id = ?`, [idParam]);
+                return { rows, rowCount: rows.length };
+            }
+            return { rows: [], rowCount: result.changes, lastID: result.lastID };
+        }
     } else {
         const result = await db.run(sqliteText, params);
         return { rows: [], rowCount: result.changes, lastID: result.lastID };
