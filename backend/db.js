@@ -4,9 +4,12 @@ const { open } = require('sqlite');
 const path = require('path');
 const fs = require('fs');
 
+const dataDir = process.env.DATA_DIR || path.join(__dirname, '..', 'database');
+if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+
 // Create connection promise for SQLite
 const dbPromise = open({
-  filename: path.join(__dirname, '..', 'database', 'civicflow.db'),
+  filename: path.join(dataDir, 'civicflow.db'),
   driver: sqlite3.Database
 });
 

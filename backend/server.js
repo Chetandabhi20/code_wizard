@@ -19,8 +19,9 @@
     app.use(express.json());
 
     // 1. Static File Serving for Uploads
-    const uploadsDir = path.join(__dirname, 'uploads');
-    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+    const dataDir = process.env.DATA_DIR || __dirname;
+    const uploadsDir = path.join(dataDir, 'uploads');
+    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
     app.use('/uploads', express.static(uploadsDir));
 
     // 2. Static File Serving for Frontend (Fixes Microphone file:/// security block!)
