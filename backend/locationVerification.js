@@ -20,9 +20,11 @@ function deg2rad(deg) {
 }
 
 async function verifyImageLocation(req, res, next) {
-    // Skip if no file was uploaded
-    if (!req.file || !req.file.path) {
-        return next();
+    if (!req.file) {
+        return res.status(400).json({
+            success: false,
+            error: 'Image is required'
+        });
     }
     
     const frontendLat = parseFloat(req.body.latitude);

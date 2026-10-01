@@ -9,6 +9,7 @@ const adminPortal = document.getElementById('adminPortal');
 
 const promptInput = document.getElementById('promptInput');
 const submitBtn = document.getElementById('submitBtn');
+const reportAuthNotice = document.getElementById('reportAuthNotice');
 
 // Auth DOM
 const openAuthBtn = document.getElementById('openAuthBtn');
@@ -74,6 +75,7 @@ function clearAuth() {
 
 function syncViewWithRole() {
   const user = getUser();
+  if (reportAuthNotice) reportAuthNotice.style.display = user ? 'none' : 'flex';
   
   if (user && (user.role === 'ADMIN' || user.role === 'DEPARTMENT')) {
     if (citizenPortal) citizenPortal.style.display = 'none';
@@ -234,14 +236,39 @@ function triggerPhotoUpload() {
   if (imageInput) imageInput.click();
 }
 
+function resetPhotoButton() {
+  const photoBtn = document.getElementById('photoBtn');
+  if (photoBtn) {
+    photoBtn.innerHTML = '<span class="material-symbols-outlined text-[16px]">add_a_photo</span> Add Photo *';
+    photoBtn.className = 'flex items-center gap-1 px-3 py-1.5 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-high font-label-sm text-label-sm transition-colors';
+  }
+}
+
 if (imageInput) {
   imageInput.addEventListener('change', () => {
     const photoBtn = document.getElementById('photoBtn');
     if (photoBtn && imageInput.files.length > 0) {
-      const name = imageInput.files[0].name;
+      const file = imageInput.files[0];
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        imageInput.value = '';
+        resetPhotoButton();
+        photoBtn.classList.add('border-error');
+        alert('Please choose a JPEG, PNG, or WEBP image.');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        imageInput.value = '';
+        resetPhotoButton();
+        photoBtn.classList.add('border-error');
+        alert('The photo must be 5MB or smaller.');
+        return;
+      }
+
+      const name = file.name;
       photoBtn.innerHTML = `<span class="material-symbols-outlined text-[16px]">check_circle</span> ${escapeHtml(name.length > 15 ? name.substring(0,12) + '...' : name)}`;
       photoBtn.classList.add('bg-tertiary-container/20', 'text-tertiary-container', 'border-tertiary-container/30');
-      photoBtn.classList.remove('text-on-surface-variant');
+      photoBtn.classList.remove('text-on-surface-variant', 'border-error');
     }
   });
 }
@@ -307,9 +334,34 @@ if (submitBtn) {
   submitBtn.addEventListener('click', async function (e) {
     e.preventDefault();
 
+    const token = getAuthToken();
+    if (!token) {
+      showToast('Please login or sign up to submit a report.', 'error');
+      openModal();
+      return;
+    }
+
     const promptText = promptInput ? promptInput.value.trim() : '';
     if (!promptText) {
       alert('Please describe the issue before submitting.');
+      return;
+    }
+
+    if (!imageInput || imageInput.files.length === 0) {
+      const photoBtn = document.getElementById('photoBtn');
+      if (photoBtn) photoBtn.classList.add('border-error');
+      alert('Please attach a photo of the issue before submitting.');
+      return;
+    }
+
+    const imageFile = imageInput.files[0];
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(imageFile.type)) {
+      alert('Please choose a JPEG, PNG, or WEBP image.');
+      return;
+    }
+    if (imageFile.size > 5 * 1024 * 1024) {
+      alert('The photo must be 5MB or smaller.');
       return;
     }
 
@@ -327,20 +379,21 @@ if (submitBtn) {
     if (locationText) formData.append('location', locationText);
     if (lat) formData.append('latitude', lat);
     if (lng) formData.append('longitude', lng);
-
-    if (imageInput && imageInput.files.length > 0) {
-      formData.append('image', imageInput.files[0]);
-    }
+    formData.append('image', imageFile);
 
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">progress_activity</span><span>AI Analyzing...</span>';
 
-    const headers = {};
-    const token = getAuthToken();
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const headers = { 'Authorization': `Bearer ${token}` };
 
     try {
       const res = await fetch(`${API_BASE}/complaints`, { method: 'POST', headers, body: formData });
+      if (res.status === 401) {
+        clearAuth();
+        openModal();
+        showToast('Session expired. Please login again.', 'error');
+        return;
+      }
       const data = await readApiResponse(res);
 
       if (data.success) {
@@ -349,11 +402,7 @@ if (submitBtn) {
         if (promptInput) promptInput.value = '';
         if (imageInput) imageInput.value = '';
         // Reset photo button
-        const photoBtn = document.getElementById('photoBtn');
-        if (photoBtn) {
-          photoBtn.innerHTML = '<span class="material-symbols-outlined text-[16px]">add_a_photo</span> Add Photo';
-          photoBtn.className = 'flex items-center gap-1 px-3 py-1.5 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-high font-label-sm text-label-sm transition-colors';
-        }
+        resetPhotoButton();
         // Reload my reports if logged in
         if (getUser()) loadMyReports();
       }
@@ -974,11 +1023,7 @@ function insertTemplate(text) {
 function clearPrompt() {
   if (promptInput) promptInput.value = '';
   if (imageInput) imageInput.value = '';
-  const photoBtn = document.getElementById('photoBtn');
-  if (photoBtn) {
-    photoBtn.innerHTML = '<span class="material-symbols-outlined text-[16px]">add_a_photo</span> Add Photo';
-    photoBtn.className = 'flex items-center gap-1 px-3 py-1.5 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-high font-label-sm text-label-sm transition-colors';
-  }
+  resetPhotoButton();
 }
 
 // ================= ADMIN CLOCK =================

@@ -13,6 +13,7 @@
     const app = express();
     const PORT = process.env.PORT || 5000;
     const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
+    if (!process.env.JWT_SECRET) console.warn('Warning: JWT_SECRET is not set; using the insecure fallback secret.');
 
     app.use(cors());
     app.use(express.json());
@@ -41,11 +42,25 @@
       storage: storage,
       limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB limit
       fileFilter: (req, file, cb) => {
-        const allowed = /jpeg|jpg|png|webp/;
-        const isValid = allowed.test(path.extname(file.originalname).toLowerCase()) && allowed.test(file.mimetype);
-        cb(isValid ? null : new Error('Only image files are allowed!'), isValid);
+        const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        const isValid = allowedExtensions.includes(path.extname(file.originalname).toLowerCase()) && allowedTypes.includes(file.mimetype);
+        cb(isValid ? null : new Error('Only JPEG, PNG, and WEBP images are allowed.'), isValid);
       }
     });
+
+    function handleImageUpload(req, res, next) {
+      upload.single('image')(req, res, (err) => {
+        if (!err) return next();
+        if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(400).json({ success: false, error: 'The image must be 5MB or smaller.' });
+        }
+        if (err.message === 'Only JPEG, PNG, and WEBP images are allowed.') {
+          return res.status(400).json({ success: false, error: err.message });
+        }
+        return next(err);
+      });
+    }
 
     // Seed Default Admin
     async function seedDefaultAdmin() {
@@ -68,22 +83,18 @@
     function authenticateToken(req, res, next) {
       const authHeader = req.headers['authorization'];
       const token = authHeader && authHeader.split(' ')[1];
-      if (!token) return res.status(401).json({ success: false, error: 'Please login to continue.' });
+      if (!token) {
+        const error = req.path === '/api/complaints'
+          ? 'Please login or sign up to submit a report.'
+          : 'Please login to continue.';
+        return res.status(401).json({ success: false, error });
+      }
 
       jwt.verify(token, JWT_SECRET, (err, userPayload) => {
-        if (err) return res.status(403).json({ success: false, error: 'Session expired. Please login again.' });
+        if (err || !userPayload || typeof userPayload !== 'object' || !userPayload.id) {
+          return res.status(401).json({ success: false, error: 'Session expired. Please login again.' });
+        }
         req.user = userPayload;
-        next();
-      });
-    }
-
-    function optionalAuth(req, res, next) {
-      const authHeader = req.headers['authorization'];
-      const token = authHeader && authHeader.split(' ')[1];
-      if (!token) return next();
-
-      jwt.verify(token, JWT_SECRET, (err, userPayload) => {
-        if (!err) req.user = userPayload;
         next();
       });
     }
@@ -139,10 +150,13 @@
     });
 
     // AI Complaint Ingestion
-    app.post('/api/complaints', optionalAuth, upload.single('image'), verifyImageLocation, async (req, res) => {
+    app.post('/api/complaints', authenticateToken, handleImageUpload, verifyImageLocation, async (req, res) => {
       const { prompt, location, latitude, longitude } = req.body;
-      const userId = req.user ? req.user.id : null;
-      const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+      if (!req.file) return res.status(400).json({ success: false, error: 'An image is required to submit a report.' });
+      if (!req.user.id) return res.status(401).json({ success: false, error: 'Session expired. Please login again.' });
+
+      const userId = req.user.id;
+      const imageUrl = `/uploads/${req.file.filename}`;
 
       const lat = latitude ? parseFloat(latitude) : null;
       const lng = longitude ? parseFloat(longitude) : null;
@@ -152,23 +166,27 @@
       }
 
       // ==== 1. IMAGE VERIFICATION ====
-      if (req.file) {
-        try {
-          const base64Image = fs.readFileSync(req.file.path, { encoding: 'base64' });
-          const verification = await verifyImage(base64Image, req.file.mimetype);
-          
-          if (!verification.is_valid) {
-            // Remove file if invalid
-            fs.unlinkSync(req.file.path);
-            return res.status(400).json({ 
-              success: false, 
-              error: 'Image rejected by AI verification.', 
-              reason: verification.reason 
-            });
-          }
-        } catch (err) {
-          console.error('Error during image verification:', err);
+      try {
+        const base64Image = fs.readFileSync(req.file.path, { encoding: 'base64' });
+        const verification = await verifyImage(base64Image, req.file.mimetype);
+
+        if (!verification.is_valid) {
+          // Remove file if invalid
+          fs.unlinkSync(req.file.path);
+          return res.status(400).json({
+            success: false,
+            error: 'Image rejected by AI verification.',
+            reason: verification.reason
+          });
         }
+      } catch (err) {
+        console.error('Error during image verification:', err);
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (cleanupError) {
+          console.error('Error removing unverified image:', cleanupError);
+        }
+        return res.status(500).json({ success: false, error: 'Image verification failed. Please try again.' });
       }
 
       try {
