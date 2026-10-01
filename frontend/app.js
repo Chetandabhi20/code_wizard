@@ -918,6 +918,12 @@ function getPriorityBadge(priority) {
 
 function getTimeAgo(dateStr) {
   if (!dateStr) return '';
+  
+  // Ensure SQLite datetime strings are treated as UTC
+  if (typeof dateStr === 'string' && !dateStr.includes('Z') && !dateStr.includes('+')) {
+    dateStr = dateStr.replace(' ', 'T') + 'Z';
+  }
+  
   const date = new Date(dateStr);
   const now = new Date();
   const diffMs = now - date;
