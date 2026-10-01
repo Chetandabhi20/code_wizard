@@ -16,7 +16,7 @@
   <input id="latitude" type="hidden"/>
   <input id="longitude" type="hidden"/>
   <input id="location" type="hidden"/>
-  <input class="hidden" id="image" type="file" accept="image/jpeg,image/png,image/webp"/>
+  <input class="hidden" id="image" type="file" accept="image/jpeg,image/png,image/webp" required/>
 
   <div id="citizenPortal">
     <header class="fixed top-0 w-full z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
@@ -113,10 +113,15 @@
                 </button>
               </div>
               
+              <div id="reportAuthNotice" class="flex items-center justify-between gap-space-sm rounded-lg bg-surface-container-low px-3 py-2">
+                <span class="font-body-sm text-body-sm text-on-surface-variant">Login or sign up to submit your report</span>
+                <button type="button" onclick="openModal()" class="px-3 py-1.5 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-high font-label-sm text-label-sm transition-colors">Login / Sign up</button>
+              </div>
+
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-space-sm">
                   <button id="photoBtn" onclick="triggerPhotoUpload()" class="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-high font-label-sm text-label-sm transition-colors">
-                    <span class="material-symbols-outlined text-[16px]">add_a_photo</span> Add Photo
+                    <span class="material-symbols-outlined text-[16px]">add_a_photo</span> Add Photo *
                   </button>
                   <button id="gpsBtn" class="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-high font-label-sm text-label-sm transition-colors">
                     <span class="material-symbols-outlined text-[16px]">location_on</span> Attach GPS
